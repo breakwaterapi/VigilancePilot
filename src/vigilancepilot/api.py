@@ -124,9 +124,9 @@ async def _send_sms_alert(
         # Lazy import so missing telnyx package doesn't break startup.
         import telnyx  # type: ignore
 
-        telnyx.api_key = api_key
+        client = telnyx.Telnyx(api_key=api_key)
 
-        msg = telnyx.Message.create(
+        msg = client.messages.send(
             messaging_profile_id=messaging_profile_id,
             from_=from_phone,
             to=to_phone,
@@ -135,7 +135,7 @@ async def _send_sms_alert(
 
         return {
             "status": "sent",
-            "telnyx_id": getattr(msg, "id", None),
+            "telnyx_id": getattr(msg.data, "id", None),
         }
 
     except ImportError:
