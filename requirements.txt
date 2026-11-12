@@ -17,7 +17,7 @@ redisvl>=0.1.0
 postman-api>=0.1.0
 
 # Optional integrations
-telnyx>=2.0.0
+telnyx==4.191.0
 
 # Logging & monitoring
 structlog>=23.0.0

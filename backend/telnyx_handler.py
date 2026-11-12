@@ -19,9 +19,10 @@ class TelnyxHandler:
         self.api_key = os.getenv("TELNYX_API_KEY")
         self.phone_number = os.getenv("TELNYX_PHONE_NUMBER")
         self.connection_id = os.getenv("TELNYX_CONNECTION_ID")
+        self.client = None
         
         if self.api_key:
-            telnyx.api_key = self.api_key
+            self.client = telnyx.Telnyx(api_key=self.api_key)
             logger.info("✅ Telnyx initialized")
         else:
             logger.warning("⚠️ Telnyx not configured")
@@ -40,7 +41,7 @@ class TelnyxHandler:
         try:
             import asyncio
             response = await asyncio.to_thread(
-                telnyx.Message.create,
+                self.client.messages.send,
                 from_=self.phone_number,
                 to=to_phone,
                 text=message
@@ -48,7 +49,7 @@ class TelnyxHandler:
             logger.info(f"SMS alert sent to {to_phone} for child {child_id}")
             return {
                 "status": "sent",
-                "message_id": response.id,
+                "message_id": response.data.id,
                 "to": to_phone
             }
         except Exception as e:
@@ -68,7 +69,7 @@ class TelnyxHandler:
         try:
             import asyncio
             call = await asyncio.to_thread(
-                telnyx.Call.create,
+                self.client.calls.dial,
                 connection_id=self.connection_id,
                 to=to_phone,
                 from_=self.phone_number,
@@ -77,7 +78,7 @@ class TelnyxHandler:
             logger.info(f"Call initiated to {to_phone} for child {child_id}")
             return {
                 "status": "initiated",
-                "call_id": call.call_control_id,
+                "call_id": call.data.call_control_id,
                 "to": to_phone
             }
         except Exception as e:
@@ -114,8 +115,8 @@ class TelnyxHandler:
         
         # Play alert message
         try:
-            telnyx.Call.speak(
-                call_control_id=call_control_id,
+            self.client.calls.actions.speak(
+                call_control_id,
                 payload="This is an urgent alert from VigilancePilot. Your child may have received a concerning message. Please check your SMS for details.",
                 voice="female",
                 language="en-US"
